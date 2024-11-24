@@ -9,14 +9,15 @@ library(randomForest)
 library(forcats)
 
 # Set environment and directory
-Sys.setenv(CUDA_VISIBLE_DEVICES = "0")
+Sys.setenv(CUDA_VISIBLE_DEVICES = "0") # this is GPU ID (check yours before running this)
 options(stringsAsFactors = FALSE)
 use_condaenv("C:\\Program Files\\ArcGIS\\Pro\\bin\\Python\\envs\\arcgispro-py3")
 
 # Create output directory if it doesn’t exist
-outdir <- "F:\\akash\\aa_PhD\\Elith et al 2006\\papers\\2021 paper with new models and codes\\models_output\\cnn1"
+outdir <- "F:\\akash\\aa_PhD\\models_output\\cnn1"
 if (!dir.exists(outdir)) dir.create(outdir, recursive = TRUE)
 
+# I have multiple regions and each region had different set of covariates. So you maybe need to tweak this as per your need. 
 # Define parameters
 regions <- "NZ" #choosing one of the six region from Elith et al (2006)
 categoricalvars <- c("ontveg", "vegsys", "toxicats", "age", "calc")
@@ -28,11 +29,11 @@ covars <- list(
   SA = c("sabio12", "sabio15", "sabio17", "sabio18", "sabio2", "sabio4", "sabio5", "sabio6"),
   SWI = c("bcc", "calc", "ccc", "ddeg", "nutri", "pday", "precyy", "sfroyy", "slope", "sradyy", "swb", "topo")
 )
-batch_sizes <- c(4, 8, 16)
-chip_sizes <- c(32, 64, 128)
-n_aug <- 5
+batch_sizes <- c(4, 8, 16) # batch size affects both the training time and the generalization of the model. A smaller batch size allows the model to learn from each example but takes longer to train. A larger batch size trains faster but may result in the model not capturing the nuances in the data.
+chip_sizes <- c(32, 64, 128) # this the extent you want to work with. for example 32 means an extent of 32x32 pixels
+n_aug <- 5 # you can play around with this. this is basically generating 5 augmented data from every single presence point. Make it 0 if you dont want to perform augmentation. 
 
-# Function to normalize a raster stack
+# Function to normalize the raster stack
 normalize_raster <- function(raster_stack) {
   if (!inherits(raster_stack, "RasterStack")) {
     stop("Input must be a RasterStack.")
@@ -49,7 +50,7 @@ normalize_raster <- function(raster_stack) {
     max_value <- max(band_values, na.rm = TRUE)
     
     # Normalize values to range between 0.01 and 1
-    normalized_values <- 0.01 + (band_values - min_value) * (1 - 0.01) / (max_value - min_value)
+    normalized_values <- 0.01 + (band_values - min_value) * (1 - 0.01) / (max_value - min_value) # i am normalizing the data with a range of 0.01 to 1. I used the value 0 as mask or nodata. CNNs are not good at handling NA.
     
     # Replace values in the original raster object with normalized values
     raster_object_normalized <- raster_stack[[i]]
@@ -63,6 +64,7 @@ normalize_raster <- function(raster_stack) {
   return(normalized_raster_stack)
 }
 
+# refer this to learn more about padding: https://medium.com/@nerdjock/convolutional-neural-network-lesson-5-padding-98b50660ddbd#:~:text=This%20is%20where%20padding%20comes,spatial%20dimensions%20of%20the%20output
 pad_raster_layer <- function(raster_layer, extra_rows, extra_cols, extra_value) {
   nrows <- nrow(raster_layer)
   ncols <- ncol(raster_layer)
@@ -108,8 +110,8 @@ for (n_aug in n_aug) {
       n <- 0
       for (r in regions) {
         presences <- disPo(r)
-        background <- read.csv(paste0("X:\\aanand37\\PhD\\Elith et al 2006\\papers\\2021 paper with new models and codes\\ecm1486-sup-0003-datas1\\DataS1\\background_50k\\", r, ".csv"))
-        raster_dir <- paste0("F:\\akash\\aa_PhD\\Elith et al 2006\\data\\data\\Environment\\", r, "\\covars")
+        background <- read.csv(paste0("X:\\aanand37\\PhD\\DataS1\\background_50k\\", r, ".csv"))
+        raster_dir <- paste0("F:\\akash\\aa_PhD\\data\\Environment\\", r, "\\covars")
         raster_files <- list.files(raster_dir, pattern = "*.tif$", full.names = TRUE)
         raster_stack <- stack(raster_files)
         
@@ -148,6 +150,7 @@ for (n_aug in n_aug) {
         desired_dimensions <- c(chip, chip, bands)
         
         for (grp in unique(presences$group)) {
+          # split your data into training (which is further split into 80% train and 20% test set) and evaluation set (this independent data will be used to evaluate model once the training is completed)
           evaluation <- disEnv(r)			#, grp)
           presence_subset <- presences[presences$group == grp, ]
           
@@ -219,7 +222,7 @@ for (n_aug in n_aug) {
             presence_chips <- aperm(presence_chips, c(4, 1, 2, 3))
             presence_chips[is.na(presence_chips)] <- 0
             
-            # Data Augmentation
+            # Data Augmentation (more information here: https://www.tensorflow.org/api_docs/python/tf/keras/preprocessing/image/ImageDataGenerator)
             datagen_hh_flip <- image_data_generator(
               featurewise_center = FALSE, 
               featurewise_std_normalization = FALSE,
@@ -301,12 +304,14 @@ for (n_aug in n_aug) {
             perm_indices <- sample(length(labels))
             full_data <- combined_arrays[perm_indices, , , ]
             full_labels <- labels[perm_indices]
-            train_indices <- createDataPartition(full_labels, p = 0.8, list = FALSE)
+            train_indices <- createDataPartition(full_labels, p = 0.8, list = FALSE) #splitting into training and testing sets
             train_raster_array <- full_data[train_indices, , , , drop = FALSE]
             train_label_vector <- full_labels[train_indices]
             test_raster_array <- full_data[-train_indices, , , , drop = FALSE]
             test_label_vector <- full_labels[-train_indices]
-            
+
+            # Below is three CNN architectures- VGG-16, VGG-19, and CNN-MS. uncomment and try each of them if you want. CNN-MS has the least no of hidden layers (7), as comapred to VGG-16 (16 layers) and VGG-19 (you guessed it right :). Only use one architecture at a time. 
+                                                              
             # Define VGG-16 architecture
             # model <- keras_model_sequential() %>%
             #   layer_conv_2d(filters = 64, kernel_size = c(3, 3), activation = "relu", padding = "same", input_shape = c(chip, chip, bands), kernel_regularizer = regularizer_l2(0.00001)) %>%
@@ -398,7 +403,7 @@ for (n_aug in n_aug) {
             #   layer_dense(units = 1000, activation = "relu", kernel_initializer = initializer_he_normal()) %>%
             #   layer_dense(units = 1, activation = "sigmoid")
             
-            # Define the model architecture
+            # CNN-MS
             model <- keras_model_sequential() %>%
               layer_conv_2d(filters = 64, kernel_size = c(3, 3), activation = "relu", padding = "same", input_shape = c(chip, chip, bands), kernel_initializer = initializer_he_normal()) %>%
               layer_batch_normalization() %>%
@@ -442,7 +447,7 @@ for (n_aug in n_aug) {
               min_lr = 1e-6
             )
             # Callbacks for early stopping and learning rate reduction
-            early_stopping <- callback_early_stopping(monitor = "val_loss", patience = 10)
+            early_stopping <- callback_early_stopping(monitor = "val_loss", patience = 10) # if your model is not learning after several iterations (or saturates) it will wait for 10 iterations and then stop the training. It saves alot of time and overfitting. But if you want to run full iterations the comment this out here and in the history below as well.
             
             ptm <- proc.time()
             # Train the model
@@ -488,9 +493,9 @@ model_file_path <- file.path(outdir, sprintf("%s_CNN_VGG16_%sAugs%s_batch%s_mode
 save_model_hdf5(model, model_file_path)
 
 #load the saved model
-model <- load_model_hdf5("F:\\akash\\aa_PhD\\Elith et al 2006\\papers\\2021 paper with new models and codes\\models_output\\cnn1\\nz30_CNN_VGG16_5Augs32_batch4_model_withnorm_0.1to1_na_0.h5")
+model <- load_model_hdf5("F:\\akash\\aa_PhD\\models_output\\cnn1\\nz30_CNN_VGG16_5Augs32_batch4_model_withnorm_0.1to1_na_0.h5")
 
-
+# From here on the code is for making maps using model you trained above
 # load the packages
 library(raster)
 library(myspatial)
@@ -502,7 +507,7 @@ library(doParallel)
 #r <- stack(li)
 #normalize the data 
 #r <- normalize_raster(r)
-r <- brick("X:\\aanand37\\PhD\\Elith et al 2006\\akash code edits\\modelling_codes\\Akash CNN codes\\CNN\\nz30\\NZ_env_data_withnorm_0.1to1_na_0.tif")
+r <- brick("X:\\aanand37\\PhD\\modelling_codes\\Akash CNN codes\\CNN\\nz30\\NZ_env_data_withnorm_0.1to1_na_0.tif")
 plot(r)
 chip_size <- 32
 
