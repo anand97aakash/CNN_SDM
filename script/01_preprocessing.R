@@ -17,6 +17,7 @@ output_raster_path <- file.path("data", "processed", paste0(region, "_env_data_n
 
 # Chip size (used for padding)
 chip_size <- 32
+chip <- 32
 pad_value <- 0  # Fill value for padding
 
 # ------------------ FUNCTIONS ------------------
