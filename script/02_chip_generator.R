@@ -12,6 +12,7 @@ library(keras)
 
 region <- "NZ"
 chip_size <- 32
+chip <- 32
 pad <- chip_size  # already applied during preprocessing
 bands <- 12        # number of raster bands; auto-detectable from raster if needed
 n_aug <- 5         # Number of augmentations per image
