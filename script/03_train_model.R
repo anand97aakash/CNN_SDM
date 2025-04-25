@@ -84,4 +84,4 @@ cat("Training complete.\n")
 
 dir.create("models", showWarnings = FALSE, recursive = TRUE)
 save_model_hdf5(model, model_output_file)
-cat("💾 Model saved at:", model_output_file, "\n")
+cat("Model saved at:", model_output_file, "\n")
