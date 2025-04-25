@@ -11,6 +11,7 @@ library(abind)
 
 region <- "NZ"
 chip_size <- 32
+chip <- 32
 bands <- 12             # Number of channels in input
 model_name <- "CNN_VGG16"
 batch_size <- 16
