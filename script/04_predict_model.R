@@ -12,6 +12,7 @@ library(abind)
 
 region <- "NZ"
 chip_size <- 32
+chip <- 32
 bands <- 12
 batch_size <- 512
 
