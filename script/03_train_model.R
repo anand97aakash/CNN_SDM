@@ -16,7 +16,7 @@ region <- "NZ"
 chip_size <- 32
 chip <- 32
 bands <- 12
-architecture <- "vgg16"   # Choose from: "cnn_ms", "vgg16", "vgg19"
+architecture <- "vgg16"   # Choose from: "CNN_MS", "vgg16", "vgg19"
 
 batch_size <- 16
 epochs <- 100
