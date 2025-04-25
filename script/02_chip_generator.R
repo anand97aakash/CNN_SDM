@@ -83,7 +83,7 @@ r_stack <- brick(input_raster_path)
 points <- read.csv(occurrence_file)
 
 # Extract chips
-cat("🔍 Extracting chips...\n")
+cat("Extracting chips...\n")
 chip_data <- extract_chips(r_stack, points, chip_size, nlayers(r_stack))
 chip_array <- chip_data$chips
 valid_points <- points[chip_data$indices, ]
