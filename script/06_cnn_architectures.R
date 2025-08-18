@@ -29,10 +29,10 @@ build_cnn_ms <- function(input_shape) {
               layer_max_pooling_2d(pool_size = c(2, 2), strides = 2) %>%
               layer_dropout(rate = 0.25) %>%
               
-              layer_flatten() %>%
-              layer_dense(units = 2048, activation = "relu", kernel_initializer = initializer_he_normal()) %>%
+              layer_global_average_pooling_2d() %>% #layer_flatten() %>%
+              layer_dense(units = 512, activation = "relu", kernel_initializer = initializer_he_normal()) %>%
               layer_dropout(rate = 0.5) %>%
-              layer_dense(units = 2048, activation = "relu", kernel_initializer = initializer_he_normal()) %>%
+              layer_dense(units = 256, activation = "relu", kernel_initializer = initializer_he_normal()) %>%
               layer_dropout(rate = 0.5) %>%
               layer_dense(units = 1000, activation = "relu", kernel_initializer = initializer_he_normal()) %>%
               layer_dense(units = 1, activation = "sigmoid")
@@ -79,12 +79,12 @@ build_vgg16 <- function(input_shape) {
             layer_max_pooling_2d(pool_size = c(2, 2), strides = 2) %>%
             layer_dropout(rate = 0.25) %>%
             #   
-            layer_flatten() %>%
-            layer_dense(units = 4096, activation = "relu", kernel_initializer = initializer_he_normal()) %>%
+            layer_global_average_pooling_2d() %>% #layer_flatten() %>%
+            layer_dense(units = 1024, activation = "relu", kernel_initializer = initializer_he_normal()) %>%
             layer_dropout(rate = 0.5) %>%
-            layer_dense(units = 4096, activation = "relu", kernel_initializer = initializer_he_normal()) %>%
+            layer_dense(units = 512, activation = "relu", kernel_initializer = initializer_he_normal()) %>%
             layer_dropout(rate = 0.5) %>%
-            layer_dense(units = 1000, activation = "relu", kernel_initializer = initializer_he_normal()) %>%
+            layer_dense(units = 256, activation = "relu", kernel_initializer = initializer_he_normal()) %>%
             layer_dense(units = 1, activation = "sigmoid")
 
   return(model)
@@ -130,12 +130,12 @@ build_vgg19 <- function(input_shape) {
             layer_max_pooling_2d(pool_size = c(2, 2), strides = 2) %>%
             layer_dropout(rate = 0.25) %>%
             # 
-            layer_flatten() %>%
-            layer_dense(units = 4096, activation = "relu", kernel_initializer = initializer_he_normal()) %>%
+            layer_global_average_pooling_2d() %>% #layer_flatten() %>%
+            layer_dense(units = 1024, activation = "relu", kernel_initializer = initializer_he_normal()) %>%
             layer_dropout(rate = 0.5) %>%
-            layer_dense(units = 4096, activation = "relu", kernel_initializer = initializer_he_normal()) %>%
+            layer_dense(units = 512, activation = "relu", kernel_initializer = initializer_he_normal()) %>%
             layer_dropout(rate = 0.5) %>%
-            layer_dense(units = 1000, activation = "relu", kernel_initializer = initializer_he_normal()) %>%
+            layer_dense(units = 256, activation = "relu", kernel_initializer = initializer_he_normal()) %>%
             layer_dense(units = 1, activation = "sigmoid")
   return(model)
 }
