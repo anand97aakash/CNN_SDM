@@ -30,11 +30,11 @@ build_cnn_ms <- function(input_shape) {
               layer_dropout(rate = 0.25) %>%
               
               layer_global_average_pooling_2d() %>% #layer_flatten() %>%
+              layer_dense(units = 1024, activation = "relu", kernel_initializer = initializer_he_normal()) %>%
+              layer_dropout(rate = 0.5) %>%
               layer_dense(units = 512, activation = "relu", kernel_initializer = initializer_he_normal()) %>%
               layer_dropout(rate = 0.5) %>%
               layer_dense(units = 256, activation = "relu", kernel_initializer = initializer_he_normal()) %>%
-              layer_dropout(rate = 0.5) %>%
-              layer_dense(units = 1000, activation = "relu", kernel_initializer = initializer_he_normal()) %>%
               layer_dense(units = 1, activation = "sigmoid")
 
   return(model)
@@ -80,7 +80,7 @@ build_vgg16 <- function(input_shape) {
             layer_dropout(rate = 0.25) %>%
             #   
             layer_global_average_pooling_2d() %>% #layer_flatten() %>%
-            layer_dense(units = 1024, activation = "relu", kernel_initializer = initializer_he_normal()) %>%
+            layer_dense(units = 1000, activation = "relu", kernel_initializer = initializer_he_normal()) %>%
             layer_dropout(rate = 0.5) %>%
             layer_dense(units = 512, activation = "relu", kernel_initializer = initializer_he_normal()) %>%
             layer_dropout(rate = 0.5) %>%
