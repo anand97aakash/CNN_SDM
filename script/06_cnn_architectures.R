@@ -44,7 +44,7 @@ build_cnn_ms <- function(input_shape) {
 
 build_vgg16 <- function(input_shape) {
   model <- keras_model_sequential() %>%
-            layer_conv_2d(filters = 64, kernel_size = c(3, 3), activation = "relu", padding = "same", input_shape = c(chip, chip, bands), kernel_regularizer = regularizer_l2(0.00001)) %>%
+            layer_conv_2d(filters = 64, kernel_size = c(3, 3), activation = "relu", padding = "same", input_shape = c(chip, chip, bands), kernel_regularizer = initializer_he_normal()) %>%
             layer_conv_2d(filters = 64, kernel_size = c(3, 3), activation = "relu", padding = "same", kernel_initializer = initializer_he_normal()) %>%
             layer_batch_normalization() %>%
             layer_max_pooling_2d(pool_size = c(2, 2), strides = 2) %>%
@@ -80,7 +80,7 @@ build_vgg16 <- function(input_shape) {
             layer_dropout(rate = 0.25) %>%
             #   
             layer_global_average_pooling_2d() %>% #layer_flatten() %>%
-            layer_dense(units = 1000, activation = "relu", kernel_initializer = initializer_he_normal()) %>%
+            layer_dense(units = 1024, activation = "relu", kernel_initializer = initializer_he_normal()) %>%
             layer_dropout(rate = 0.5) %>%
             layer_dense(units = 512, activation = "relu", kernel_initializer = initializer_he_normal()) %>%
             layer_dropout(rate = 0.5) %>%
@@ -94,7 +94,7 @@ build_vgg16 <- function(input_shape) {
 
 build_vgg19 <- function(input_shape) {
   model <- keras_model_sequential() %>%
-            layer_conv_2d(filters = 64, kernel_size = c(3, 3), activation = "relu", padding = "same", input_shape = c(chip, chip, bands), kernel_regularizer = regularizer_l2(0.00001)) %>%
+            layer_conv_2d(filters = 64, kernel_size = c(3, 3), activation = "relu", padding = "same", input_shape = c(chip, chip, bands), kernel_regularizer = initializer_he_normal()) %>%
             layer_conv_2d(filters = 64, kernel_size = c(3, 3), activation = "relu", padding = "same", kernel_initializer = initializer_he_normal()) %>%
             layer_batch_normalization() %>%
             layer_max_pooling_2d(pool_size = c(2, 2), strides = 2) %>%
